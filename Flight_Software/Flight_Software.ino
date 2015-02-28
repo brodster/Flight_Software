@@ -136,5 +136,10 @@ void saveState(){
   EEPROM.write(addr,state);
 }
 
+/**
+* Required: 
+* MISSION_TIME,ALT_SENSOR,OUTSIDE_TEMP,
+* INSIDE_TEMP,VOLTAGE,FSW_STATE,angle of descent
+**/
 void transmitData (unsigned long currentMillis, int sensor_data[]){
 }
