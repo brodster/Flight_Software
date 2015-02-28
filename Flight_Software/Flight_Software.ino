@@ -10,6 +10,12 @@
 **/
 byte state = -1;
 
+// Transmission variables
+//time between
+const int transmitInterval = 1000;
+//Previous transmit time in milliseconds
+unsigned long previousTransmitTime;
+
 void setup() 
 {
   // put your setup code here, to run once:
@@ -58,7 +64,13 @@ void loop()
   
   saveState();
   
-  if(
+  unsigned long currentMillis = millis();
+  if(currentMillis - previousTransmitTime >= transmitInterval)
+  {
+    transmitData(currentMillis, sensor_data);
+    //Calibrate time to transmit next interval step
+    previousTransmitTime = currentMillis - currentMillis%transmitInterval
+  }
   
 }
 
@@ -96,4 +108,7 @@ void landed(){
 *//
 void saveState(){
   //TODO
+}
+
+void transmitData (unsigned long currentMillis, int sensor_data[]){
 }
