@@ -1,3 +1,9 @@
+/*
+---Team Tomahalk Payload Flight Sloftware---
+*/
+
+#include <EEPROM.h>
+
 /**
 * Flight Software state variable:
 * -1 - Uninizialized
@@ -69,7 +75,7 @@ void loop()
   {
     transmitData(currentMillis, sensor_data);
     //Calibrate time to transmit next interval step
-    previousTransmitTime = currentMillis - currentMillis%transmitInterval
+    previousTransmitTime = currentMillis - currentMillis%transmitInterval;
   }
   
 }
@@ -77,12 +83,28 @@ void loop()
 /**
 * Boot Sequence Method
 * Loads flight software state from memory
-* If no previous state found or is landed/end state,
-* Set state to Launch Wait.
+* If no previous state or is landed/end state,
+* Clear memory and set state to Launch Wait.
 **/
 void boot()
 {
-  //TODO
+  int addr = 0;
+  byte stateFromMemory = EEPROM.read(addr);
+  
+  if(stateFromMemory == 5 || stateFromMemory == 0)
+  {
+    //clear memory
+    for (int i = 0; i < 512; i++)
+    {
+      EEPROM.write(i, 0);
+    }
+    state = 0;
+  }
+  else
+  {
+    //load state from memory
+    state = stateFromMemory;
+  }
 }
 
 /**
@@ -105,9 +127,13 @@ void landed(){
 
 /**
 * Save the Flight Software state to memory
-*//
+* currently Saving:
+* - Flight State
+*/
 void saveState(){
-  //TODO
+  int addr = 0;
+  
+  EEPROM.write(addr,state);
 }
 
 void transmitData (unsigned long currentMillis, int sensor_data[]){

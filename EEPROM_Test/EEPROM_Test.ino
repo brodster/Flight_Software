@@ -12,23 +12,23 @@ void setup() {
   Serial.begin(9600);
   
   //clear function
-  EEPROM.write(addr, 0);
+  //EEPROM.write(addr, 0);
 }
 
 void loop() 
 {
-//  //Read current value from EEPROM
-//  val = EEPROM.read(addr);
-//  
-//  Serial.print("Value was ");
-//  Serial.print(val);
-//  val = val+1;
-//  
-//  Serial.print(", Newly saving ");
-//  Serial.print(val);
-//  Serial.println();
-//  
-//  EEPROM.write(addr,val);
-//  
-//  delay(1000);
+  //Read current value from EEPROM
+  val = EEPROM.read(addr);
+  
+  Serial.print("Value was ");
+  Serial.print(val);
+  val = val+1;
+  
+  Serial.print(", Newly saving ");
+  Serial.print(val);
+  Serial.println();
+  
+  EEPROM.write(addr,val);
+  
+  delay(1000);
 }
