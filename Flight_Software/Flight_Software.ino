@@ -3,6 +3,7 @@
 */
 
 #include <EEPROM.h>
+#include <Wire.h> 
 
 /**
 * Flight Software state variable:
@@ -22,11 +23,17 @@ const int transmitInterval = 1000;
 //Previous transmit time in milliseconds
 unsigned long previousTransmitTime=0;
 
+
+
 void setup() 
 {
   // put your setup code here, to run once:
   Serial.begin(9600);
-
+  
+  //setup for Adafruit 10DoF IMU
+    Wire.begin();
+    //initilize_HMC588L_MAGNETOMETER();
+    initilize_Adafruit_10_DOF_Sensors();
 }
 
 /**
@@ -42,7 +49,7 @@ void loop()
   //1. Check boot State
   if(state == -1)
   {
-    //boot();
+    boot();
   }
   
   //2. Collect data from sensors
@@ -69,7 +76,7 @@ void loop()
       boot();
   }
   
-  //saveState();
+  saveState();
   
   unsigned long currentMillis = millis();
   if(currentMillis - previousTransmitTime >= transmitInterval)

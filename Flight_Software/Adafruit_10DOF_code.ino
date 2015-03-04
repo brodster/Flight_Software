@@ -13,20 +13,21 @@ Adafruit_LSM303_Mag_Unified   mag   = Adafruit_LSM303_Mag_Unified(30302);
 Adafruit_BMP085_Unified       bmp   = Adafruit_BMP085_Unified(18001);
 float seaLevelPressure = SENSORS_PRESSURE_SEALEVELHPA;  /* Update this with the correct SLP for accurate altitude measurements */
 
+//For Stand-alone testing:
 //SENSOR INITILIZATION
-void setup(void)
-{
-  Wire.begin();
-  Serial.begin(9600);
-  //initilize_HMC588L_MAGNETOMETER();
-  initilize_Adafruit_10_DOF_Sensors();
-}
-
-
-void loop (){
- float descent_angle, Heading, Altitude, Temperature, Roll;
- adafruit_function (&descent_angle, &Heading, &Altitude, &Temperature, &Roll);
-}
+//void setup(void)
+//{
+//  Wire.begin();
+//  Serial.begin(9600);
+//  //initilize_HMC588L_MAGNETOMETER();
+//  initilize_Adafruit_10_DOF_Sensors();
+//}
+//
+//
+//void loop (){
+// float descent_angle, Heading, Altitude, Temperature, Roll;
+// adafruit_function (&descent_angle, &Heading, &Altitude, &Temperature, &Roll);
+//}
 
 
 
