@@ -33,7 +33,7 @@ void setup()
   //setup for Adafruit 10DoF IMU
     Wire.begin();
     //initilize_HMC588L_MAGNETOMETER();
-    initilize_Adafruit_10_DOF_Sensors();
+    //initilize_Adafruit_10_DOF_Sensors();
 }
 
 /**
@@ -49,13 +49,12 @@ void loop()
   //1. Check boot State
   if(state == -1)
   {
-    boot();
+    //boot();
   }
   
   //2. Collect data from sensors
   //TODO
-  //What format do we want for this??
-  float sensor_data[5];
+  float sensor_data[5] = {1.0,2.1,3.5,4.3,5.2};
   
   //3. Preform State-specific functions
   switch(state)
@@ -72,16 +71,16 @@ void loop()
 	descent(sensor_data);
     case 5:
 	landed();
-    default:
-      boot();
+    //default:
+     // boot();
   }
   
-  saveState();
+  //saveState();
   
   unsigned long currentMillis = millis();
   if(currentMillis - previousTransmitTime >= transmitInterval)
   {
-    transmitData(currentMillis, sensor_data);
+    transmitData(currentMillis, sensor_data,sizeof(sensor_data)/sizeof(float));
     //Calibrate time to transmit next interval step
     previousTransmitTime = currentMillis - currentMillis%transmitInterval;
   }
@@ -150,20 +149,20 @@ void saveState()
 * MISSION_TIME,ALT_SENSOR,OUTSIDE_TEMP,
 * INSIDE_TEMP,VOLTAGE,FSW_STATE,angle of descent
 *
-* Transmittion format:
-* Tranmistion 1: 1,2,3,45,6,123,55,3,22,454
-* Transmition 2: 33,11,244,55,22,44,222,44
-* ie. ',' delimintes new value, '\n' deliminates new line
+* Transmission format:
+* Transmission 1: 1,2,3,45,6,123,55,3,22,454
+* Transmission 2: 33,11,244,55,22,44,222,44
+* ie. ',' delimintes new value, '\n' deliminates new transmission
 **/
-void transmitData (unsigned long currentMillis, float sensor_data[])
+void transmitData (unsigned long currentMillis, float sensor_data[], int sensor_data_length)
 {
   const char delim = ',';
   //transmit mission time in seconds
   Serial.print(currentMillis/1000.0,2);
-  
+    
   //transmit sensor data
   //TODO to change for new sensor data format
-  for(int i=0; i<sizeof(sensor_data)/sizeof(float);i++)
+  for(int i=0; i<sensor_data_length;i++)
   {
     Serial.print(delim);
     Serial.print(sensor_data[i]);
