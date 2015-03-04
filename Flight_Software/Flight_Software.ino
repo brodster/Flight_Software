@@ -20,11 +20,12 @@ byte state = -1;
 //time between
 const int transmitInterval = 1000;
 //Previous transmit time in milliseconds
-unsigned long previousTransmitTime;
+unsigned long previousTransmitTime=0;
 
 void setup() 
 {
   // put your setup code here, to run once:
+  Serial.begin(9600);
 
 }
 
@@ -41,13 +42,13 @@ void loop()
   //1. Check boot State
   if(state == -1)
   {
-    boot();
+    //boot();
   }
   
   //2. Collect data from sensors
   //TODO
   //What format do we want for this??
-  int sensor_data[5];
+  float sensor_data[5];
   
   //3. Preform State-specific functions
   switch(state)
@@ -68,7 +69,7 @@ void loop()
       boot();
   }
   
-  saveState();
+  //saveState();
   
   unsigned long currentMillis = millis();
   if(currentMillis - previousTransmitTime >= transmitInterval)
@@ -112,15 +113,15 @@ void boot()
 * includes: state actions as well as state transition check
 **/
 //TODO
-void launch_wait(int sensor_data[]){
+void launch_wait(float sensor_data[]){
 }
-void ascent(int sensor_data[]){
+void ascent(float sensor_data[]){
 }
-void rocketDeployment_Stabilization(int sensor_data[]){
+void rocketDeployment_Stabilization(float sensor_data[]){
 }
-void seperation(int sensor_data[]){
+void seperation(float sensor_data[]){
 }
-void descent(int sensor_data[]){
+void descent(float sensor_data[]){
 }
 void landed(){
 }
@@ -130,7 +131,8 @@ void landed(){
 * currently Saving:
 * - Flight State
 */
-void saveState(){
+void saveState()
+{
   int addr = 0;
   
   EEPROM.write(addr,state);
@@ -140,6 +142,26 @@ void saveState(){
 * Required: 
 * MISSION_TIME,ALT_SENSOR,OUTSIDE_TEMP,
 * INSIDE_TEMP,VOLTAGE,FSW_STATE,angle of descent
+*
+* Transmittion format:
+* Tranmistion 1: 1,2,3,45,6,123,55,3,22,454
+* Transmition 2: 33,11,244,55,22,44,222,44
+* ie. ',' delimintes new value, '\n' deliminates new line
 **/
-void transmitData (unsigned long currentMillis, int sensor_data[]){
+void transmitData (unsigned long currentMillis, float sensor_data[])
+{
+  const char delim = ',';
+  //transmit mission time in seconds
+  Serial.print(currentMillis/1000.0,2);
+  
+  //transmit sensor data
+  //TODO to change for new sensor data format
+  for(int i=0; i<sizeof(sensor_data)/sizeof(float);i++)
+  {
+    Serial.print(delim);
+    Serial.print(sensor_data[i]);
+  }
+  
+  //end transmition
+  Serial.println();
 }
