@@ -32,8 +32,8 @@ void setup()
   
   //setup for Adafruit 10DoF IMU
     Wire.begin();
-    //initilize_HMC588L_MAGNETOMETER();
-    //initilize_Adafruit_10_DOF_Sensors();
+    initilize_HMC588L_MAGNETOMETER();
+    initilize_Adafruit_10_DOF_Sensors();
 }
 
 /**
@@ -49,7 +49,7 @@ void loop()
   //1. Check boot State
   if(state == -1)
   {
-    //boot();
+    boot();
   }
   
   //2. Collect data from sensors
@@ -71,11 +71,11 @@ void loop()
 	descent(sensor_data);
     case 5:
 	landed();
-    //default:
-     // boot();
+    default:
+      boot();
   }
   
-  //saveState();
+  saveState();
   
   unsigned long currentMillis = millis();
   if(currentMillis - previousTransmitTime >= transmitInterval)
@@ -154,6 +154,7 @@ void saveState()
 * Transmission 2: 33,11,244,55,22,44,222,44
 * ie. ',' delimintes new value, '\n' deliminates new transmission
 **/
+//Fix to include sensors when setup
 void transmitData (unsigned long currentMillis, float sensor_data[], int sensor_data_length)
 {
   const char delim = ',';
