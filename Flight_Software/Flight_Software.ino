@@ -1,9 +1,10 @@
 /*
----Team Tomahalk Payload Flight Sloftware---
+* ---Team Tomahalk Payload Flight Sloftware---
+* File contains the core flight software loop
 */
 
-#include <EEPROM.h>
-#include <Wire.h> 
+
+#include <Wire.h>
 
 /**
 * Flight Software state variable:
@@ -32,7 +33,7 @@ void setup()
   
   //setup for Adafruit 10DoF IMU
     Wire.begin();
-    initilize_HMC588L_MAGNETOMETER();
+    //initilize_HMC588L_MAGNETOMETER();
     initilize_Adafruit_10_DOF_Sensors();
 }
 
@@ -88,33 +89,6 @@ void loop()
 }
 
 /**
-* Boot Sequence Method
-* Loads flight software state from memory
-* If no previous state or is landed/end state,
-* Clear memory and set state to Launch Wait.
-**/
-void boot()
-{
-  int addr = 0;
-  byte stateFromMemory = EEPROM.read(addr);
-  
-  if(stateFromMemory == 5 || stateFromMemory == 0)
-  {
-    //clear memory
-    for (int i = 0; i < 512; i++)
-    {
-      EEPROM.write(i, 0);
-    }
-    state = 0;
-  }
-  else
-  {
-    //load state from memory
-    state = stateFromMemory;
-  }
-}
-
-/**
 * Collection of the state-specific funcions
 * includes: state actions as well as state transition check
 **/
@@ -132,17 +106,7 @@ void descent(float sensor_data[]){
 void landed(){
 }
 
-/**
-* Save the Flight Software state to memory
-* currently Saving:
-* - Flight State
-*/
-void saveState()
-{
-  int addr = 0;
-  
-  EEPROM.write(addr,state);
-}
+
 
 /**
 * Required: 
