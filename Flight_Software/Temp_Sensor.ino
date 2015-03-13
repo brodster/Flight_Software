@@ -23,7 +23,7 @@ const int tempPin = 0;
 **/
 float getExtTemp()
 {
-  int millivolts = round(analogRead(tempPin)*(5000.0/1023.0)); 
+  short millivolts = round(analogRead(tempPin)*(5000.0/1023.0)); 
   float temp = (millivolts-500)/10.0;
   return temp;
 }

@@ -3,7 +3,6 @@
 * File contains the core flight software loop
 */
 
-
 #include <Wire.h>
 
 /**
@@ -20,9 +19,32 @@ byte state = -1;
 
 // Transmission variables
 //time between
-const int transmitInterval = 1000;
+const short transmitInterval = 1000;
 //Previous transmit time in milliseconds
-unsigned long previousTransmitTime=0;
+unsigned int previousTransmitTime=0;
+
+/**
+*Sensor data variable for loop
+*
+* Layout:
+* array pos. - value (units-accuracy)
+* [0] - barometric altitude (m-0.1)
+* [1] - external temp (celcius-1)
+* [2] - internal temp (celcius-1)
+* [3] - voltage (volts-0.05)
+* [4] - descent_angle/axial angle from z-axis/orientation (????-??)
+* [5] - roll/axial rotation rate (?????-??)
+* [6] - heading/axial facing position (?????-??)
+* [7] - descent rate (m/s - 0.1)
+* [8] - latitude
+* [9] - longitude
+**/
+float sensor_data[10];
+
+//used for descent rate calculation
+//stores last 5 altitudes measured with timestamp
+float alt_buffer[5];
+unsigned int alt_buffer_time[5];
 
 
 
@@ -32,9 +54,11 @@ void setup()
   Serial.begin(9600);
   
   //setup for Adafruit 10DoF IMU
-    Wire.begin();
-    //initilize_HMC588L_MAGNETOMETER();
-    initilize_Adafruit_10_DOF_Sensors();
+  Wire.begin();
+  initilize_Adafruit_10_DOF_Sensors();
+    
+  //setup GPS
+  setupGPS();
 }
 
 /**
@@ -53,23 +77,22 @@ void loop()
     boot();
   }
   
-  //2. Collect data from sensors
-  //TODO
-  float sensor_data[5] = {1.0,2.1,3.5,4.3,5.2};
+  //2. Collect data from sensors and fill Sensor_Data array
+  Collect_Sensor_Data();  
   
   //3. Preform State-specific functions
   switch(state)
   {
     case 0:
-	launch_wait(sensor_data);
+	launch_wait();
     case 1:
-	ascent(sensor_data);
+	ascent();
     case 2:
-	rocketDeployment_Stabilization(sensor_data);
+	rocketDeployment_Stabilization();
     case 3:
-	seperation(sensor_data);
+	seperation();
     case 4:
-	descent(sensor_data);
+	descent();
     case 5:
 	landed();
     default:
@@ -78,10 +101,10 @@ void loop()
   
   saveState();
   
-  unsigned long currentMillis = millis();
+  unsigned int currentMillis = millis();
   if(currentMillis - previousTransmitTime >= transmitInterval)
   {
-    transmitData(currentMillis, sensor_data,sizeof(sensor_data)/sizeof(float));
+    transmitData(currentMillis);
     //Calibrate time to transmit next interval step
     previousTransmitTime = currentMillis - currentMillis%transmitInterval;
   }
@@ -93,17 +116,80 @@ void loop()
 * includes: state actions as well as state transition check
 **/
 //TODO
-void launch_wait(float sensor_data[]){
+void launch_wait(){
 }
-void ascent(float sensor_data[]){
+void ascent(){
 }
-void rocketDeployment_Stabilization(float sensor_data[]){
+void rocketDeployment_Stabilization(){
 }
-void seperation(float sensor_data[]){
+void seperation(){
 }
-void descent(float sensor_data[]){
+void descent(){
 }
 void landed(){
+}
+
+/**
+* Pulls data from sensors to fill the flight software's sensor_data float array
+* Fills according to the sensor_data variable description/layout ie. size of 10
+**/
+void Collect_Sensor_Data()
+{
+  //TODO get rid of temp/local variale to save memory
+  float alt; //IMU
+  float extTemp; //tmp
+  float inTemp; //IMU
+  float voltage; //TODO
+  float descentAng;  //IMU
+  float roll; //IMU
+  float heading; //IMU
+  float descentRate; //calculate based on previous alts
+  float latitude; //GPS
+  float longitude; //GPS
+  
+  adafruit_function (&descentAng, &heading, &alt, &inTemp, &roll);
+  descentRate = calculate_descentRate(alt,millis());
+  getGPSdata (&latitude, &longitude);
+  extTemp = 15; //TODO temp sensor
+  
+  sensor_data[0] = alt;
+  sensor_data[1] = extTemp;
+  sensor_data[2] = inTemp;
+  sensor_data[3] = voltage;
+  sensor_data[4] = descentAng;
+  sensor_data[5] = roll;
+  sensor_data[6] = heading;
+  sensor_data[7] = descentRate;
+  sensor_data[8] = latitude;
+  sensor_data[9] = longitude;
+  
+}
+
+/**
+* function uses the new altitude data, stores it in the alt_buffer array
+* and then calculates an average descent rate based on the previous 5 altitudes
+* returns float value of calculated average descent rate
+**/
+float calculate_descentRate(float new_alt, unsigned int new_alt_timestamp)
+{
+  //shift alt_buffer and alt_buffer_time array elements
+  for(byte i = 4; i>0;i--)
+  {
+    alt_buffer[i] = alt_buffer[i-1];
+    alt_buffer_time[i] = alt_buffer_time[i-1];
+  }
+  //add new elements
+  alt_buffer[0] = new_alt;
+  alt_buffer_time[0] = new_alt_timestamp;
+  
+  //calculate average of the average descent rates between each altitude step ie. 5->4, 4->3, 3->2, 2->1
+  float sum_average_descent_rate_step =0;
+  
+  for(byte i = 4; i>0;i--)
+  {
+    sum_average_descent_rate_step += (alt_buffer[i]-alt_buffer[i-1])/(alt_buffer_time[i-1]-alt_buffer_time[i]);
+  }
+  return sum_average_descent_rate_step/4.0;
 }
 
 
@@ -119,7 +205,7 @@ void landed(){
 * ie. ',' delimintes new value, '\n' deliminates new transmission
 **/
 //Fix to include sensors when setup
-void transmitData (unsigned long currentMillis, float sensor_data[], int sensor_data_length)
+void transmitData (unsigned int currentMillis)
 {
   const char delim = ',';
   //transmit mission time in seconds
@@ -127,7 +213,7 @@ void transmitData (unsigned long currentMillis, float sensor_data[], int sensor_
     
   //transmit sensor data
   //TODO to change for new sensor data format
-  for(int i=0; i<sensor_data_length;i++)
+  for(int i=0; i<10;i++)
   {
     Serial.print(delim);
     Serial.print(sensor_data[i]);
