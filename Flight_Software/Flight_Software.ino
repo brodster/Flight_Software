@@ -5,7 +5,7 @@
 
 #include <Wire.h>
 int packet_count;
-
+int sensor_size;
 /**
 * Flight Software state variable:
 * -1 - Uninizialized
@@ -33,14 +33,15 @@ unsigned int previousTransmitTime=0;
 * [1] - external temp (celcius-1)
 * [2] - internal temp (celcius-1)
 * [3] - voltage (volts-0.05)
-* [4] - descent_angle/axial angle from z-axis/orientation (????-??)
-* [5] - roll/axial rotation rate (?????-??)
-* [6] - heading/axial facing position (?????-??)
+* [4] - x axis angle, "alpha" (degrees)  //Look at IMU for axis referencing
+* [5] - y axis angle, "alpha" (degrees)  //Look at IMU for axis referencing
+* [6] - z axis angle, "alpha" (degrees)  //Look at IMU for axis referencing
 * [7] - descent rate (m/s - 0.1)
 * [8] - latitude
 * [9] - longitude
+* [10]- z_axis roll Rate (deg/s)
 **/
-float sensor_data[10];
+float sensor_data[11];
 
 //used for descent rate calculation
 //stores last 5 altitudes measured with timestamp
@@ -60,6 +61,9 @@ void setup()
     
   //setup GPS
   setupGPS();
+  
+  //Ammount of transmission sensor data
+   sensor_size = 11;
 }
 
 /**
@@ -138,32 +142,40 @@ void landed(){
 void Collect_Sensor_Data()
 {
   //TODO get rid of temp/local variale to save memory
-  float alt; //IMU
-  float extTemp; //tmp
+  float alt;
+  float IMU_alt; //IMU,----> altitude from IMU
+  float extTemp; //TMP 36
   float inTemp; //IMU
   float voltage; //TODO
-  float descentAng;  //IMU
-  float roll; //IMU
-  float heading; //IMU
+  float x_alpha;  //IMU, Angular position relative to Adafruit x Axis
+  float y_alpha; //IMU, Angular position relative to Adafruit y Axis
+  float z_alpha; //IMU, Heading
+  float z_rollrate; //IMU, rollrate relative to Adafruit z Axis
   float descentRate; //calculate based on previous alts
   float latitude; //GPS
   float longitude; //GPS
+  float GPS_alt; //GPS,----> altitude from GPS satlite
   
-  adafruit_function (&descentAng, &heading, &alt, &inTemp, &roll);
+  //adafruit_function (&descentAng, &heading, &alt, &inTemp, &roll);  <----Previous function call
+  adafruit_function (&y_alpha, &x_alpha, &z_alpha, &z_rollrate, &IMU_alt, &inTemp);
+  getGPSdata (&latitude, &longitude, &GPS_alt);
+  
+  alt = GPS_alt;  //can also be IMU_alt we just need to decide
   descentRate = calculate_descentRate(alt,millis());
-  getGPSdata (&latitude, &longitude);
   extTemp = 15; //TODO temp sensor
+ 
   
   sensor_data[0] = alt;
   sensor_data[1] = extTemp;
   sensor_data[2] = inTemp;
   sensor_data[3] = voltage;
-  sensor_data[4] = descentAng;
-  sensor_data[5] = roll;
-  sensor_data[6] = heading;
+  sensor_data[4] = x_alpha;
+  sensor_data[5] = y_alpha;
+  sensor_data[6] = z_alpha;
   sensor_data[7] = descentRate;
   sensor_data[8] = latitude;
   sensor_data[9] = longitude;
+  sensor_data[10] = z_rollrate;
   
 }
 
@@ -217,7 +229,7 @@ void transmitData (unsigned int currentMillis)
   
   //transmit sensor data
   //TODO to change for new sensor data format
-  for(int i=0; i<10;i++)
+  for(int i=0; i<sensor_size;i++)
   {
     Serial.print(delim);
     Serial.print(sensor_data[i]);

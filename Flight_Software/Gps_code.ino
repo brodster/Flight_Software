@@ -94,13 +94,14 @@ void useInterrupt(boolean v) {
 * - latitude
 * - Longitude
 **/
-void getGPSdata(float *latitude, float *longitude)                
+void getGPSdata(float *latitude, float *longitude, float *altitude)                
 {
   GPS.newNMEAreceived();
   GPS.parse(GPS.lastNMEA());
   if (GPS.fix >= 1) {
-      *latitude = GPS.latitudeDegrees;   
-      *longitude = GPS.longitudeDegrees;}
+      *latitude  = GPS.latitudeDegrees;   
+      *longitude = GPS.longitudeDegrees;
+      *altitude  = GPS.altitude;}
     else {
-    *latitude = 9999;   *longitude = -9999;}
+    *latitude = 9999;   *longitude = -9999;  *altitude = 9999;}
 }

@@ -1,4 +1,4 @@
-  //THIS CODE IS FOR THE ADAFRUIT 10 DOF SENSOR------
+//THIS CODE IS FOR THE ADAFRUIT 10 DOF SENSOR------
   //CHECK BUTTOM FOR FUNCTIONS
   #include <Wire.h> 
   #include <Adafruit_Sensor.h>
@@ -16,7 +16,7 @@
   
   float seaLevelPressure = SENSORS_PRESSURE_SEALEVELHPA;  /* Update this with the correct SLP for accurate altitude measurements */
   
-  //SENSOR INITILIZATION
+  //for Stand-Alone Testing:
   void setup(void)
   {
     Wire.begin();
@@ -29,8 +29,8 @@
   
   
     void loop (){
-     float y_alpha, x_alpha, z_alpha, z_rollrate, Altitude, Temperature;
-     adafruit_function (&y_alpha, &x_alpha, &z_alpha, &z_rollrate, &Altitude, &Temperature);
+    // float y_alpha, x_alpha, z_alpha, z_rollrate, Altitude, Temperature;
+     //adafruit_function (&y_alpha, &x_alpha, &z_alpha, &z_rollrate, &Altitude, &Temperature);
      
      //Serial.print (z_rollrate);
      //Serial.print ("******************");
