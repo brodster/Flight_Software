@@ -4,7 +4,7 @@
 */
 
 #include <Wire.h>
-int packet_count;
+unsigned int packet_count;
 
 /**
 * Flight Software state variable:
@@ -22,7 +22,8 @@ byte state = -1;
 //time between
 const short transmitInterval = 1000;
 //Previous transmit time in milliseconds
-unsigned int previousTransmitTime=0;
+unsigned long previousTransmitTime=0;
+unsigned long currentMillis;
 
 /**
 *Sensor data variable for loop
@@ -41,13 +42,13 @@ unsigned int previousTransmitTime=0;
 * [9] - longitude
 * [10]- z_axis roll Rate (deg/s)
 **/
-int sensor_size=11;
+byte sensor_size=11;
 float sensor_data[11];
 
 //used for descent rate calculation
 //stores last 5 altitudes measured with timestamp
 float alt_buffer[5];
-unsigned int alt_buffer_time[5];
+unsigned long alt_buffer_time[5];
 
 
 
@@ -102,7 +103,7 @@ void loop()
   saveState();
   
   //4. Transmit data
-  unsigned int currentMillis = millis();
+  currentMillis = millis();
   if(currentMillis - previousTransmitTime >= transmitInterval)
   {
     transmitData(currentMillis);
@@ -132,11 +133,11 @@ void landed(){
 
 /**
 * Pulls data from sensors to fill the flight software's sensor_data float array
-* Fills according to the sensor_data variable description/layout ie. size of 10
+* Fills according to the sensor_data variable description/layout ie. size of 11
 **/
 void Collect_Sensor_Data()
 {
-  //TODO get rid of temp/local variale to save memory
+  //local memory hole (52 bytes)
   float alt;
   float IMU_alt; //IMU,----> altitude from IMU
   float extTemp; //TMP 36
@@ -151,13 +152,13 @@ void Collect_Sensor_Data()
   float longitude; //GPS
   float GPS_alt; //GPS,----> altitude from GPS satlite
   
-  //adafruit_function (&descentAng, &heading, &alt, &inTemp, &roll);  <----Previous function call
+  //adafruit_function (&descentAng, &heading, &alt, &inTemp, &roll);  <----Previous function call #deprecated
   adafruit_function (&y_alpha, &x_alpha, &z_alpha, &z_rollrate, &IMU_alt, &inTemp);
   getGPSdata (&latitude, &longitude, &GPS_alt);
   
   alt = GPS_alt;  //can also be IMU_alt we just need to decide
-  descentRate = calculate_descentRate(alt,millis());
-  extTemp = 15; //TODO temp sensor
+  descentRate = calculate_descentRate(&alt,millis());
+  extTemp = getExtTemp();
  
   
   sensor_data[0] = alt;
@@ -179,7 +180,7 @@ void Collect_Sensor_Data()
 * and then calculates an average descent rate based on the previous 5 altitudes
 * returns float value of calculated average descent rate
 **/
-float calculate_descentRate(float new_alt, unsigned int new_alt_timestamp)
+float calculate_descentRate(float *new_alt, unsigned long new_alt_timestamp)
 {
   //shift alt_buffer and alt_buffer_time array elements
   for(byte i = 4; i>0;i--)
@@ -188,7 +189,7 @@ float calculate_descentRate(float new_alt, unsigned int new_alt_timestamp)
     alt_buffer_time[i] = alt_buffer_time[i-1];
   }
   //add new elements
-  alt_buffer[0] = new_alt;
+  alt_buffer[0] = *new_alt;
   alt_buffer_time[0] = new_alt_timestamp;
   
   //calculate average of the average descent rates between each altitude step ie. 5->4, 4->3, 3->2, 2->1
@@ -204,21 +205,17 @@ float calculate_descentRate(float new_alt, unsigned int new_alt_timestamp)
 
 
 /**
-* Required: 
-* MISSION_TIME,ALT_SENSOR,OUTSIDE_TEMP,
-* INSIDE_TEMP,VOLTAGE,FSW_STATE,angle of descent
 *
 * Transmission format:
 * Transmission 1: 1,2,3,45,6,123,55,3,22,454
 * Transmission 2: 33,11,244,55,22,44,222,44
 * ie. ',' delimintes new value, '\n' deliminates new transmission
 **/
-//Fix to include sensors when setup
-void transmitData (unsigned int currentMillis)
+void transmitData (unsigned long currentMillis)
 {
   const char delim = ',';
   //transmit mission time in seconds
-  Serial.print(++ packet_count);// Ammount of data sent;
+  Serial.print(++ packet_count);// Amount of data sent;
   Serial.print(delim);
   Serial.print(currentMillis/1000.0,2);
   
@@ -227,7 +224,7 @@ void transmitData (unsigned int currentMillis)
   for(int i=0; i<sensor_size;i++)
   {
     Serial.print(delim);
-    Serial.print(sensor_data[i]);
+    Serial.print(sensor_data[i],2);
   }
   
   //end transmition

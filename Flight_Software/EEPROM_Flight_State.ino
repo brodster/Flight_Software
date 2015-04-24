@@ -22,6 +22,8 @@
 * If no previous state or is landed/end state,
 * Clear memory and set state to Launch Wait.
 **/
+
+// TODO - review interaction with Millis() and Descent_Rate stuff
 void boot()
 {
   int addr = 0;
