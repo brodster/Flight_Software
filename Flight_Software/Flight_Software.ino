@@ -1,11 +1,11 @@
 /*
-* ---Team Tomahalk Payload Flight Sloftware---
+* ---Team Tomahalk Payload Flight Software---
 * File contains the core flight software loop
 */
 
 #include <Wire.h>
 int packet_count;
-int sensor_size;
+
 /**
 * Flight Software state variable:
 * -1 - Uninizialized
@@ -41,7 +41,8 @@ unsigned int previousTransmitTime=0;
 * [9] - longitude
 * [10]- z_axis roll Rate (deg/s)
 **/
-float sensor_data[11];
+int sensor_size=11;
+float sensor_data[sensor_size];
 
 //used for descent rate calculation
 //stores last 5 altitudes measured with timestamp
@@ -51,19 +52,17 @@ unsigned int alt_buffer_time[5];
 
 
 void setup() 
-{  packet_count = 1;
+{  
+  packet_count = 0;
   // put your setup code here, to run once:
   Serial.begin(9600);
   
   //setup for Adafruit 10DoF IMU
   Wire.begin();
-  initilize_Adafruit_10_DOF_Sensors();
+  initilize_Adafruit_10_DOF_Sensors();  //Enable adafruit sensors;
     
   //setup GPS
   setupGPS();
-  
-  //Ammount of transmission sensor data
-   sensor_size = 11;
 }
 
 /**
@@ -110,7 +109,6 @@ void loop()
   if(currentMillis - previousTransmitTime >= transmitInterval)
   {
     transmitData(currentMillis);
-    ++ packet_count;
     //Calibrate time to transmit next interval step
     previousTransmitTime = currentMillis - currentMillis%transmitInterval;
   }
@@ -223,7 +221,7 @@ void transmitData (unsigned int currentMillis)
 {
   const char delim = ',';
   //transmit mission time in seconds
-  Serial.print(packet_count);// Ammount of data sent;
+  Serial.print(++ packet_count);// Ammount of data sent;
   Serial.print(delim);
   Serial.print(currentMillis/1000.0,2);
   
