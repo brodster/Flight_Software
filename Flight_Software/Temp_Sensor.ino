@@ -1,4 +1,4 @@
-const int tempSensorPin = 0;
+const int tempSensorPin = 1;
 
 //For unit testing:
 //void setup() {
@@ -23,6 +23,5 @@ const int tempSensorPin = 0;
 **/
 float getExtTemp()
 {
-  short millivolts = round(analogRead(tempSensorPin)*(5000.0/1023.0)); 
-  return (millivolts-500)/10.0;
+  return (analogRead(tempSensorPin)*(5000.0/1024.0)-500.0)/10.0;
 }

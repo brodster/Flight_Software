@@ -8,15 +8,15 @@ unsigned int packet_count;
 
 /**
 * Flight Software state variable:
-* -1 - Uninizialized
-*  0 - Launch Wait
-*  1 - Ascent
-*  2 - Rocket Deployment / Stabilization
-*  3 - Seperation
-*  4 - Descent (Main Payload Action Stage)
-*  5 - Landed 
+*  0 - Uninizialized
+*  1 - Launch Wait
+*  2 - Ascent
+*  3 - Rocket Deployment / Stabilization
+*  4 - Seperation
+*  5 - Descent (Main Payload Action Stage)
+*  6 - Landed 
 **/
-byte state = -1;
+byte state = 0;
 
 // Transmission variables
 //time between
@@ -57,7 +57,7 @@ void setup()
   packet_count = 0;
   Serial.begin(9600);
   
-  boot();
+  //boot();
   
   //setup for Adafruit 10DoF IMU
   Wire.begin();
@@ -83,20 +83,21 @@ void loop()
   //2. Preform State-specific functions
   switch(state)
   {
-    case 0:
-	launch_wait();
     case 1:
-	ascent();
+	launch_wait();
     case 2:
-	rocketDeployment_Stabilization();
+	ascent();
     case 3:
-	seperation();
+	rocketDeployment_Stabilization();
     case 4:
-	descent();
+	seperation();
     case 5:
+	descent();
+    case 6:
 	landed();
     default:
-      boot();
+      //boot();
+      ;
   }
   
   //3. Save State to memory
@@ -106,7 +107,7 @@ void loop()
   currentMillis = millis();
   if(currentMillis - previousTransmitTime >= transmitInterval)
   {
-    transmitData(currentMillis);
+    transmitData(&currentMillis);
     //Calibrate time to transmit next interval step
     previousTransmitTime = currentMillis - currentMillis%transmitInterval;
   }
@@ -211,20 +212,21 @@ float calculate_descentRate(float *new_alt, unsigned long new_alt_timestamp)
 * Transmission 2: 33,11,244,55,22,44,222,44
 * ie. ',' delimintes new value, '\n' deliminates new transmission
 **/
-void transmitData (unsigned long currentMillis)
+void transmitData (unsigned long *currentMillis)
 {
   const char delim = ',';
   //transmit mission time in seconds
   Serial.print(++ packet_count);// Amount of data sent;
   Serial.print(delim);
-  Serial.print(currentMillis/1000.0,2);
+  Serial.print(*currentMillis/1000.0,2);
+  Serial.print(delim);
+  Serial.print(state);
   
   //transmit sensor data
-  //TODO to change for new sensor data format
   for(int i=0; i<sensor_size;i++)
   {
     Serial.print(delim);
-    Serial.print(sensor_data[i],2);
+    Serial.print(sensor_data[i],1);
   }
   
   //end transmition
