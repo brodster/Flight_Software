@@ -42,7 +42,7 @@ unsigned int previousTransmitTime=0;
 * [10]- z_axis roll Rate (deg/s)
 **/
 int sensor_size=11;
-float sensor_data[sensor_size];
+float sensor_data[11];
 
 //used for descent rate calculation
 //stores last 5 altitudes measured with timestamp
@@ -54,8 +54,9 @@ unsigned int alt_buffer_time[5];
 void setup() 
 {  
   packet_count = 0;
-  // put your setup code here, to run once:
   Serial.begin(9600);
+  
+  boot();
   
   //setup for Adafruit 10DoF IMU
   Wire.begin();
@@ -67,24 +68,18 @@ void setup()
 
 /**
 * Main Software Loop:
-* 1. check boot state
-* 2. Collect data from sensors
-* 3. Preform State-specific functions (actions and transitions check)
-* 4. Save State to memory
-* 5. Transmit data
+* 1. Collect data from sensors
+* 2. Preform State-specific functions (actions and transitions check)
+* 3. Save State to memory
+* 4. Transmit data
 **/
 void loop() 
 {
-  //1. Check boot State
-  if(state == -1)
-  {
-    boot();
-  }
   
-  //2. Collect data from sensors and fill Sensor_Data array
+  //1. Collect data from sensors and fill Sensor_Data array
   Collect_Sensor_Data();  
   
-  //3. Preform State-specific functions
+  //2. Preform State-specific functions
   switch(state)
   {
     case 0:
@@ -103,8 +98,10 @@ void loop()
       boot();
   }
   
+  //3. Save State to memory
   saveState();
   
+  //4. Transmit data
   unsigned int currentMillis = millis();
   if(currentMillis - previousTransmitTime >= transmitInterval)
   {
