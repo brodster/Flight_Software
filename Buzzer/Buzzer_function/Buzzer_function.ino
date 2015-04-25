@@ -1,11 +1,12 @@
-buzzer_pin = 8;
-void setup (){}
 
-void loop (){
-buzzer();
-}
+//void setup(){} 
 
-//Function is used at the end to make the Buzzer active
-void buzzer () {
-tone (buzzer_pin, 262);
+//void loop(){Buzzer();}
+
+void Buzzer()
+{
+  tone (6, 262);
+  delay (4000);
+  noTone (6);
+  delay (5000);
 }
